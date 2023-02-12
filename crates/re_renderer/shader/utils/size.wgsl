@@ -3,7 +3,12 @@
 
 
 
-fn unresolved_size_to_world(_unresolved_size: f32, camera_distance: f32, auto_size: f32) -> f32 {
+fn unresolved_size_to_world(
+    _unresolved_size: f32,
+    camera_distance: f32,
+    auto_size: f32,
+    world_size_scale: f32
+) -> f32 {
     // Resolve auto size.
     var unresolved_size: f32;
     if _unresolved_size == inf() {
@@ -19,7 +24,7 @@ fn unresolved_size_to_world(_unresolved_size: f32, camera_distance: f32, auto_si
 
     // Is it a world size?
     if unresolved_size > 0.0 {
-        return unresolved_size;
+        return unresolved_size * world_size_scale;
     }
 
     // Negative size indicates size in points.

@@ -94,3 +94,12 @@ enum DrawOrder {
     /// Postprocessing effects that are applied before the final tonemapping step.
     Postprocess = 90000,
 }
+
+fn to_uniform_scale(scale: glam::Vec3) -> f32 {
+    if macaw::Vec3Ext::has_equal_components(scale, 0.001) {
+        scale.x
+    } else {
+        // Geometric mean.
+        (scale.x * scale.y * scale.z).cbrt()
+    }
+}

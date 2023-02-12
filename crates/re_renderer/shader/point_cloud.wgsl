@@ -12,6 +12,7 @@ var color_texture: texture_2d<f32>;
 struct BatchUniformBuffer {
     world_from_obj: Mat4,
     flags: u32,
+    world_size_scale: f32,
 };
 @group(2) @binding(0)
 var<uniform> batch: BatchUniformBuffer;
@@ -114,7 +115,7 @@ fn vs_main(@builtin(vertex_index) vertex_idx: u32) -> VertexOut {
     // Resolve radius to a world size. We need the camera distance for this, which is useful later on.
     let to_camera = frame.camera_position - point_data.pos;
     let camera_distance = length(to_camera);
-    let radius = unresolved_size_to_world(point_data.unresolved_radius, camera_distance, frame.auto_size_points);
+    let radius = unresolved_size_to_world(point_data.unresolved_radius, camera_distance, frame.auto_size_points, batch.world_size_scale);
 
     // Span quad
     var pos: Vec3;

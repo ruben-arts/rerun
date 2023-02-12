@@ -73,7 +73,8 @@ mod gpu_data {
     pub struct BatchUniformBuffer {
         pub world_from_obj: wgpu_buffer_types::Mat4,
         pub flags: PointCloudBatchFlags,
-        pub _padding: glam::Vec3,
+        pub world_size_scale: f32,
+        pub _padding: glam::Vec2,
     }
 }
 
@@ -374,6 +375,13 @@ impl PointCloudDrawData {
 
             let mut start_point_for_next_batch = 0;
             for (i, batch_info) in batches.iter().enumerate() {
+                let world_size_scale = crate::renderer::to_uniform_scale(
+                    batch_info.world_from_obj.to_scale_rotation_translation().0,
+                )
+                .abs(); // Projections can lead to negative scale. Ignore that.
+                dbg!(batch_info.world_from_obj.to_scale_rotation_translation().0);
+                dbg!(world_size_scale);
+
                 // CAREFUL: Memory from `write_buffer_with` may not be aligned, causing bytemuck to fail at runtime if we use it to cast the memory to a slice!
                 let offset = i * allocation_size_per_uniform_buffer as usize;
                 staging_buffer
@@ -381,7 +389,8 @@ impl PointCloudDrawData {
                     .copy_from_slice(bytemuck::bytes_of(&gpu_data::BatchUniformBuffer {
                         world_from_obj: batch_info.world_from_obj.into(),
                         flags: batch_info.flags,
-                        _padding: glam::Vec3::ZERO,
+                        world_size_scale,
+                        _padding: glam::Vec2::ZERO,
                     }));
 
                 let bind_group = ctx.gpu_resources.bind_groups.alloc(
