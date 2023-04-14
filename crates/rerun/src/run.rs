@@ -464,19 +464,25 @@ fn receive_into_log_db(rx: &Receiver<LogMsg>) -> anyhow::Result<re_data_store::L
 
     let timeout = std::time::Duration::from_secs(12);
 
+    let mut clients: Option<i32> = None;
     loop {
         match rx.recv_timeout(timeout) {
-            Ok(msg) => {
-                re_log::info_once!("Received first message.");
-                let is_goodbye = matches!(msg, re_log_types::LogMsg::Goodbye(_));
+            Ok(msg @ re_log_types::LogMsg::Goodbye(_)) => {
                 db.add(&msg)?;
                 num_messages += 1;
-                if is_goodbye {
-                    db.entity_db.data_store.sanity_check()?;
-                    anyhow::ensure!(0 < num_messages, "No messages received");
-                    re_log::info!("Successfully ingested {num_messages} messages.");
-                    return Ok(db);
+                if clients.is_none() {
+                    anyhow::bail!("Saw Goodbye before BeginRecordingMsg")
                 }
+                clients = Some(clients.unwrap_or(0) - 1);
+            }
+            Ok(msg @ re_log_types::LogMsg::BeginRecordingMsg(_)) => {
+                db.add(&msg)?;
+                num_messages += 1;
+                clients = Some(clients.unwrap_or(0) + 1);
+            }
+            Ok(msg) => {
+                db.add(&msg)?;
+                num_messages += 1;
             }
             Err(RecvTimeoutError::Timeout) => {
                 anyhow::bail!(
@@ -487,6 +493,10 @@ fn receive_into_log_db(rx: &Receiver<LogMsg>) -> anyhow::Result<re_data_store::L
             Err(RecvTimeoutError::Disconnected) => {
                 anyhow::bail!("Channel disconnected without a Goodbye message.");
             }
+        }
+        if clients == Some(0) {
+            re_log::info!("Successfully ingested {num_messages} messages.");
+            return Ok(db);
         }
     }
 }
