@@ -118,6 +118,11 @@ pub struct RectangleOptions {
     pub texture_filter_magnification: TextureFilterMag,
     pub texture_filter_minification: TextureFilterMin,
 
+    /// Any pixel with this value, prior to colormapping, will be transparent.
+    ///
+    /// Attention: Applied after filtering!
+    pub cutout_value: Option<glam::Vec4>,
+
     /// Tint that is multiplied to the rect, supports pre-multiplied alpha.
     pub multiplicative_tint: Rgba,
 
@@ -132,6 +137,7 @@ impl Default for RectangleOptions {
         Self {
             texture_filter_magnification: TextureFilterMag::Nearest,
             texture_filter_minification: TextureFilterMin::Linear,
+            cutout_value: None,
             multiplicative_tint: Rgba::WHITE,
             depth_offset: 0,
             outline_mask: OutlineMaskPreference::NONE,
@@ -210,7 +216,9 @@ mod gpu_data {
         minification_filter: u32,
         magnification_filter: u32,
 
-        _end_padding: [wgpu_buffer_types::PaddingRow; 16 - 6],
+        cutout_value: glam::Vec4,
+
+        _end_padding: [wgpu_buffer_types::PaddingRow; 16 - 7],
     }
 
     impl UniformBuffer {
@@ -236,6 +244,7 @@ mod gpu_data {
             let super::RectangleOptions {
                 texture_filter_magnification: _,
                 texture_filter_minification: _,
+                cutout_value,
                 multiplicative_tint,
                 depth_offset,
                 outline_mask,
@@ -307,6 +316,7 @@ mod gpu_data {
                 gamma: *gamma,
                 minification_filter,
                 magnification_filter,
+                cutout_value: cutout_value.unwrap_or(glam::Vec4::ONE * f32::MAX),
                 _end_padding: Default::default(),
             })
         }

@@ -54,6 +54,9 @@ struct UniformBuffer {
 
     minification_filter: u32,
     magnification_filter: u32,
+
+    /// Any pixel with this value is discarded.
+    cutout_value: Vec4,
 };
 
 @group(1) @binding(0)

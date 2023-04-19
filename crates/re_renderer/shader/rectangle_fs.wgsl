@@ -68,6 +68,11 @@ fn fs_main(in: VertexOut) -> @location(0) Vec4 {
         return ERROR_RGBA; // unknown sample type
     }
 
+    // Discard if the sample is has the cutout value:
+    if all(sampled_value == rect_info.cutout_value) {
+        discard;
+    }
+
     // Normalize the sample:
     let range = rect_info.range_min_max;
     var normalized_value: Vec4 = (sampled_value - range.x) / (range.y - range.x);

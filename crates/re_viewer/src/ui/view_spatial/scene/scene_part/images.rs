@@ -76,6 +76,8 @@ fn push_tensor_texture(
                 options: RectangleOptions {
                     texture_filter_magnification,
                     texture_filter_minification,
+                    cutout_value: (tensor.meaning == TensorDataMeaning::ClassId)
+                        .then_some(glam::Vec4::ZERO),
                     multiplicative_tint,
                     depth_offset: -1, // Push to background. Mostly important for mouse picking order!
                     outline_mask,
@@ -105,9 +107,9 @@ fn handle_image_layering(scene: &mut SceneSpatial) {
         scene
             .primitives
             .textured_rectangles
-            .iter_mut()
+            .drain(..) // We rebuild the list as we might reorder as well!
             .batching(move |it| {
-                for rect in it.by_ref() {
+                for rect in it {
                     let prev_plane = cur_plane;
                     cur_plane = macaw::Plane3::from_normal_point(
                         rect.extent_u.cross(rect.extent_v).normalize(),
@@ -130,9 +132,14 @@ fn handle_image_layering(scene: &mut SceneSpatial) {
                     None
                 }
             })
-    };
-    // Then, change opacity & transformation for planes within group except the base plane.
+    }
+    .collect_vec();
+
+    // Then, for each planar group do resorting and change transparency.
     for mut grouped_rects in rects_grouped_by_plane {
+        // Rectangles with cutout should generally come last.
+        grouped_rects.sort_by_key(|rect| rect.options.cutout_value.is_some());
+
         let total_num_images = grouped_rects.len();
         for (idx, rect) in grouped_rects.iter_mut().enumerate() {
             // Set depth offset for correct order and avoid z fighting when there is a 3d camera.
@@ -148,6 +155,8 @@ fn handle_image_layering(scene: &mut SceneSpatial) {
             }; // avoid precision problems in framebuffer
             rect.options.multiplicative_tint = rect.options.multiplicative_tint.multiply(opacity);
         }
+
+        scene.primitives.textured_rectangles.extend(grouped_rects);
     }
 }
 
