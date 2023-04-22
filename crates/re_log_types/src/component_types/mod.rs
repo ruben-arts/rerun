@@ -41,6 +41,7 @@ mod transform;
 mod vec;
 
 pub use arrow::Arrow3D;
+pub use arrow_convert_shims::BinaryBuffer;
 pub use bbox::Box3D;
 pub use class_id::ClassId;
 pub use color::ColorRGBA;
