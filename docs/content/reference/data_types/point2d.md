@@ -19,7 +19,19 @@ annotation context, and `keypoint_id` can be used to make connected edges betwee
 
 ## Simple Example
 
-code-example: point2d_simple
+```python
+"""Log some very simple points."""
+from __future__ import annotations
+
+import rerun as rr
+
+rr.init("points", spawn=True)
+
+rr.log_points("simple", positions=[[0, 0], [1, 1]])
+
+# Log an extra rect to set the view bounds
+rr.log_rect("bounds", [0, 0, 4, 3], rect_format=rr.RectFormat.XCYCWH)
+```
 
 <picture>
   <source media="(max-width: 480px)" srcset="https://static.rerun.io/a5263f49955a41b24edf2fed6bd9dfe8398437d2_point2d_simple_480w.png">
@@ -31,7 +43,25 @@ code-example: point2d_simple
 
 ## Complex Example
 
-code-example: point2d_random
+```python
+"""Log some random points with color and radii."""
+from __future__ import annotations
+
+import rerun as rr
+from numpy.random import default_rng
+
+rr.init("points", spawn=True)
+rng = default_rng(12345)
+
+positions = rng.uniform(-3, 3, size=[10, 2])
+colors = rng.uniform(0, 255, size=[10, 3])
+radii = rng.uniform(0, 1, size=[10])
+
+rr.log_points("random", positions=positions, colors=colors, radii=radii)
+
+# Log an extra rect to set the view bounds
+rr.log_rect("bounds", [0, 0, 8, 6], rect_format=rr.RectFormat.XCYCWH)
+```
 
 <picture>
   <source media="(max-width: 480px)" srcset="https://static.rerun.io/cd7e4c3b892678869f6745db1d64715610d579f5_point2d_random_480w.png">
