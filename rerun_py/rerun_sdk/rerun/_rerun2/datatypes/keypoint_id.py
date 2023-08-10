@@ -13,6 +13,7 @@ from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
 )
+from ._overrides import keypointid_native_to_pa_array  # noqa: F401
 
 __all__ = ["KeypointId", "KeypointIdArray", "KeypointIdArrayLike", "KeypointIdLike", "KeypointIdType"]
 
@@ -67,7 +68,7 @@ class KeypointIdArray(BaseExtensionArray[KeypointIdArrayLike]):
 
     @staticmethod
     def _native_to_pa_array(data: KeypointIdArrayLike, data_type: pa.DataType) -> pa.Array:
-        raise NotImplementedError
+        return keypointid_native_to_pa_array(data, data_type)
 
 
 KeypointIdType._ARRAY_TYPE = KeypointIdArray

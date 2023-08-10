@@ -14,9 +14,7 @@
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[repr(transparent)]
-pub struct PrimitiveComponent {
-    pub value: u32,
-}
+pub struct PrimitiveComponent(pub u32);
 
 impl<'a> From<PrimitiveComponent> for ::std::borrow::Cow<'a, PrimitiveComponent> {
     #[inline]
@@ -46,12 +44,7 @@ impl crate::Loggable for PrimitiveComponent {
     #[inline]
     fn to_arrow_datatype() -> arrow2::datatypes::DataType {
         use ::arrow2::datatypes::*;
-        DataType::Struct(vec![Field {
-            name: "value".to_owned(),
-            data_type: DataType::UInt32,
-            is_nullable: false,
-            metadata: [].into(),
-        }])
+        DataType::UInt32
     }
 
     #[allow(unused_imports, clippy::wildcard_imports)]
@@ -65,57 +58,34 @@ impl crate::Loggable for PrimitiveComponent {
         use crate::Loggable as _;
         use ::arrow2::{array::*, datatypes::*};
         Ok({
-            let (somes, data): (Vec<_>, Vec<_>) = data
+            let (somes, data0): (Vec<_>, Vec<_>) = data
                 .into_iter()
                 .map(|datum| {
                     let datum: Option<::std::borrow::Cow<'a, Self>> = datum.map(Into::into);
+                    let datum = datum.map(|datum| {
+                        let Self(data0) = datum.into_owned();
+                        data0
+                    });
                     (datum.is_some(), datum)
                 })
                 .unzip();
-            let bitmap: Option<::arrow2::bitmap::Bitmap> = {
+            let data0_bitmap: Option<::arrow2::bitmap::Bitmap> = {
                 let any_nones = somes.iter().any(|some| !*some);
                 any_nones.then(|| somes.into())
             };
-            StructArray::new(
-                (if let Some(ext) = extension_wrapper {
+            PrimitiveArray::new(
+                {
+                    _ = extension_wrapper;
                     DataType::Extension(
-                        ext.to_owned(),
-                        Box::new(
-                            <crate::testing::datatypes::PrimitiveComponent>::to_arrow_datatype(),
-                        ),
+                        "rerun.testing.datatypes.PrimitiveComponent".to_owned(),
+                        Box::new(DataType::UInt32),
                         None,
                     )
-                } else {
-                    <crate::testing::datatypes::PrimitiveComponent>::to_arrow_datatype()
-                })
-                .to_logical_type()
-                .clone(),
-                vec![{
-                    let (somes, value): (Vec<_>, Vec<_>) = data
-                        .iter()
-                        .map(|datum| {
-                            let datum = datum.as_ref().map(|datum| {
-                                let Self { value, .. } = &**datum;
-                                value.clone()
-                            });
-                            (datum.is_some(), datum)
-                        })
-                        .unzip();
-                    let value_bitmap: Option<::arrow2::bitmap::Bitmap> = {
-                        let any_nones = somes.iter().any(|some| !*some);
-                        any_nones.then(|| somes.into())
-                    };
-                    PrimitiveArray::new(
-                        {
-                            _ = extension_wrapper;
-                            DataType::UInt32.to_logical_type().clone()
-                        },
-                        value.into_iter().map(|v| v.unwrap_or_default()).collect(),
-                        value_bitmap,
-                    )
-                    .boxed()
-                }],
-                bitmap,
+                    .to_logical_type()
+                    .clone()
+                },
+                data0.into_iter().map(|v| v.unwrap_or_default()).collect(),
+                data0_bitmap,
             )
             .boxed()
         })
@@ -130,65 +100,23 @@ impl crate::Loggable for PrimitiveComponent {
     {
         use crate::Loggable as _;
         use ::arrow2::{array::*, datatypes::*};
-        Ok({
-            let data = data
-                .as_any()
-                .downcast_ref::<::arrow2::array::StructArray>()
-                .ok_or_else(|| crate::DeserializationError::DatatypeMismatch {
-                    expected: data.data_type().clone(),
-                    got: data.data_type().clone(),
+        Ok(data
+            .as_any()
+            .downcast_ref::<UInt32Array>()
+            .unwrap()
+            .into_iter()
+            .map(|v| v.copied())
+            .map(|v| {
+                v.ok_or_else(|| crate::DeserializationError::MissingData {
                     backtrace: ::backtrace::Backtrace::new_unresolved(),
                 })
-                .map_err(|err| crate::DeserializationError::Context {
-                    location: "rerun.testing.datatypes.PrimitiveComponent".into(),
-                    source: Box::new(err),
-                })?;
-            if data.is_empty() {
-                Vec::new()
-            } else {
-                let (data_fields, data_arrays, data_bitmap) =
-                    (data.fields(), data.values(), data.validity());
-                let is_valid = |i| data_bitmap.map_or(true, |bitmap| bitmap.get_bit(i));
-                let arrays_by_name: ::std::collections::HashMap<_, _> = data_fields
-                    .iter()
-                    .map(|field| field.name.as_str())
-                    .zip(data_arrays)
-                    .collect();
-                let value = {
-                    let data = &**arrays_by_name["value"];
-                    data.as_any()
-                        .downcast_ref::<UInt32Array>()
-                        .unwrap()
-                        .into_iter()
-                        .map(|v| v.copied())
-                };
-                ::itertools::izip!(value)
-                    .enumerate()
-                    .map(|(i, (value))| {
-                        is_valid(i)
-                            .then(|| {
-                                Ok(Self {
-                                    value: value
-                                        .ok_or_else(|| crate::DeserializationError::MissingData {
-                                            backtrace: ::backtrace::Backtrace::new_unresolved(),
-                                        })
-                                        .map_err(|err| crate::DeserializationError::Context {
-                                            location:
-                                                "rerun.testing.datatypes.PrimitiveComponent#value"
-                                                    .into(),
-                                            source: Box::new(err),
-                                        })?,
-                                })
-                            })
-                            .transpose()
-                    })
-                    .collect::<crate::DeserializationResult<Vec<_>>>()
-                    .map_err(|err| crate::DeserializationError::Context {
-                        location: "rerun.testing.datatypes.PrimitiveComponent".into(),
-                        source: Box::new(err),
-                    })?
-            }
-        })
+            })
+            .map(|res| res.map(|v| Some(Self(v))))
+            .collect::<crate::DeserializationResult<Vec<Option<_>>>>()
+            .map_err(|err| crate::DeserializationError::Context {
+                location: "rerun.testing.datatypes.PrimitiveComponent#value".into(),
+                source: Box::new(err),
+            })?)
     }
 
     #[inline]
@@ -211,9 +139,7 @@ impl crate::Datatype for PrimitiveComponent {}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[repr(transparent)]
-pub struct StringComponent {
-    pub value: crate::ArrowString,
-}
+pub struct StringComponent(pub crate::ArrowString);
 
 impl<'a> From<StringComponent> for ::std::borrow::Cow<'a, StringComponent> {
     #[inline]
@@ -243,12 +169,7 @@ impl crate::Loggable for StringComponent {
     #[inline]
     fn to_arrow_datatype() -> arrow2::datatypes::DataType {
         use ::arrow2::datatypes::*;
-        DataType::Struct(vec![Field {
-            name: "value".to_owned(),
-            data_type: DataType::Utf8,
-            is_nullable: false,
-            metadata: [].into(),
-        }])
+        DataType::Utf8
     }
 
     #[allow(unused_imports, clippy::wildcard_imports)]
@@ -262,71 +183,52 @@ impl crate::Loggable for StringComponent {
         use crate::Loggable as _;
         use ::arrow2::{array::*, datatypes::*};
         Ok({
-            let (somes, data): (Vec<_>, Vec<_>) = data
+            let (somes, data0): (Vec<_>, Vec<_>) = data
                 .into_iter()
                 .map(|datum| {
                     let datum: Option<::std::borrow::Cow<'a, Self>> = datum.map(Into::into);
+                    let datum = datum.map(|datum| {
+                        let Self(data0) = datum.into_owned();
+                        data0
+                    });
                     (datum.is_some(), datum)
                 })
                 .unzip();
-            let bitmap: Option<::arrow2::bitmap::Bitmap> = {
+            let data0_bitmap: Option<::arrow2::bitmap::Bitmap> = {
                 let any_nones = somes.iter().any(|some| !*some);
                 any_nones.then(|| somes.into())
             };
-            StructArray::new(
-                (if let Some(ext) = extension_wrapper {
-                    DataType::Extension(
-                        ext.to_owned(),
-                        Box::new(<crate::testing::datatypes::StringComponent>::to_arrow_datatype()),
-                        None,
-                    )
-                } else {
-                    <crate::testing::datatypes::StringComponent>::to_arrow_datatype()
-                })
-                .to_logical_type()
-                .clone(),
-                vec![{
-                    let (somes, value): (Vec<_>, Vec<_>) = data
+            {
+                let inner_data: ::arrow2::buffer::Buffer<u8> =
+                    data0.iter().flatten().flat_map(|s| s.0.clone()).collect();
+                let offsets = ::arrow2::offset::Offsets::<i32>::try_from_lengths(
+                    data0
                         .iter()
-                        .map(|datum| {
-                            let datum = datum.as_ref().map(|datum| {
-                                let Self { value, .. } = &**datum;
-                                value.clone()
-                            });
-                            (datum.is_some(), datum)
-                        })
-                        .unzip();
-                    let value_bitmap: Option<::arrow2::bitmap::Bitmap> = {
-                        let any_nones = somes.iter().any(|some| !*some);
-                        any_nones.then(|| somes.into())
-                    };
-                    {
-                        let inner_data: ::arrow2::buffer::Buffer<u8> =
-                            value.iter().flatten().flat_map(|s| s.0.clone()).collect();
-                        let offsets =
-                            ::arrow2::offset::Offsets::<i32>::try_from_lengths(value.iter().map(
-                                |opt| opt.as_ref().map(|datum| datum.0.len()).unwrap_or_default(),
-                            ))
-                            .unwrap()
-                            .into();
-                        #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
-                        unsafe {
-                            Utf8Array::<i32>::new_unchecked(
-                                {
-                                    _ = extension_wrapper;
-                                    DataType::Utf8.to_logical_type().clone()
-                                },
-                                offsets,
-                                inner_data,
-                                value_bitmap,
+                        .map(|opt| opt.as_ref().map(|datum| datum.0.len()).unwrap_or_default()),
+                )
+                .unwrap()
+                .into();
+
+                #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
+                unsafe {
+                    Utf8Array::<i32>::new_unchecked(
+                        {
+                            _ = extension_wrapper;
+                            DataType::Extension(
+                                "rerun.testing.datatypes.StringComponent".to_owned(),
+                                Box::new(DataType::Utf8),
+                                None,
                             )
-                        }
-                        .boxed()
-                    }
-                }],
-                bitmap,
-            )
-            .boxed()
+                            .to_logical_type()
+                            .clone()
+                        },
+                        offsets,
+                        inner_data,
+                        data0_bitmap,
+                    )
+                }
+                .boxed()
+            }
         })
     }
 
@@ -340,69 +242,26 @@ impl crate::Loggable for StringComponent {
         use crate::Loggable as _;
         use ::arrow2::{array::*, datatypes::*};
         Ok({
-            let data = data
-                .as_any()
-                .downcast_ref::<::arrow2::array::StructArray>()
-                .ok_or_else(|| crate::DeserializationError::DatatypeMismatch {
-                    expected: data.data_type().clone(),
-                    got: data.data_type().clone(),
-                    backtrace: ::backtrace::Backtrace::new_unresolved(),
-                })
-                .map_err(|err| crate::DeserializationError::Context {
-                    location: "rerun.testing.datatypes.StringComponent".into(),
-                    source: Box::new(err),
-                })?;
-            if data.is_empty() {
-                Vec::new()
-            } else {
-                let (data_fields, data_arrays, data_bitmap) =
-                    (data.fields(), data.values(), data.validity());
-                let is_valid = |i| data_bitmap.map_or(true, |bitmap| bitmap.get_bit(i));
-                let arrays_by_name: ::std::collections::HashMap<_, _> = data_fields
-                    .iter()
-                    .map(|field| field.name.as_str())
-                    .zip(data_arrays)
-                    .collect();
-                let value = {
-                    let data = &**arrays_by_name["value"];
-                    {
-                        let downcast = data.as_any().downcast_ref::<Utf8Array<i32>>().unwrap();
-                        let offsets = downcast.offsets();
-                        arrow2::bitmap::utils::ZipValidity::new_with_validity(
-                            offsets.iter().zip(offsets.lengths()),
-                            downcast.validity(),
-                        )
-                        .map(|elem| elem.map(|(o, l)| downcast.values().clone().sliced(*o as _, l)))
-                        .map(|v| v.map(crate::ArrowString))
-                    }
-                };
-                ::itertools::izip!(value)
-                    .enumerate()
-                    .map(|(i, (value))| {
-                        is_valid(i)
-                            .then(|| {
-                                Ok(Self {
-                                    value: value
-                                        .ok_or_else(|| crate::DeserializationError::MissingData {
-                                            backtrace: ::backtrace::Backtrace::new_unresolved(),
-                                        })
-                                        .map_err(|err| crate::DeserializationError::Context {
-                                            location:
-                                                "rerun.testing.datatypes.StringComponent#value"
-                                                    .into(),
-                                            source: Box::new(err),
-                                        })?,
-                                })
-                            })
-                            .transpose()
-                    })
-                    .collect::<crate::DeserializationResult<Vec<_>>>()
-                    .map_err(|err| crate::DeserializationError::Context {
-                        location: "rerun.testing.datatypes.StringComponent".into(),
-                        source: Box::new(err),
-                    })?
-            }
+            let downcast = data.as_any().downcast_ref::<Utf8Array<i32>>().unwrap();
+            let offsets = downcast.offsets();
+            arrow2::bitmap::utils::ZipValidity::new_with_validity(
+                offsets.iter().zip(offsets.lengths()),
+                downcast.validity(),
+            )
+            .map(|elem| elem.map(|(o, l)| downcast.values().clone().sliced(*o as _, l)))
+            .map(|v| v.map(crate::ArrowString))
+        }
+        .map(|v| {
+            v.ok_or_else(|| crate::DeserializationError::MissingData {
+                backtrace: ::backtrace::Backtrace::new_unresolved(),
+            })
         })
+        .map(|res| res.map(|v| Some(Self(v))))
+        .collect::<crate::DeserializationResult<Vec<Option<_>>>>()
+        .map_err(|err| crate::DeserializationError::Context {
+            location: "rerun.testing.datatypes.StringComponent#value".into(),
+            source: Box::new(err),
+        })?)
     }
 
     #[inline]

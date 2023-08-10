@@ -956,12 +956,7 @@ class AffixFuzzer20Type(BaseExtensionType):
     def __init__(self) -> None:
         pa.ExtensionType.__init__(
             self,
-            pa.struct(
-                [
-                    pa.field("p", pa.struct([pa.field("value", pa.uint32(), False, {})]), False, {}),
-                    pa.field("s", pa.struct([pa.field("value", pa.utf8(), False, {})]), False, {}),
-                ]
-            ),
+            pa.struct([pa.field("p", pa.uint32(), False, {}), pa.field("s", pa.utf8(), False, {})]),
             "rerun.testing.datatypes.AffixFuzzer20",
         )
 

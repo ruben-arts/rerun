@@ -13,6 +13,7 @@ from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
 )
+from ._overrides import classid_native_to_pa_array  # noqa: F401
 
 __all__ = ["ClassId", "ClassIdArray", "ClassIdArrayLike", "ClassIdLike", "ClassIdType"]
 
@@ -60,7 +61,7 @@ class ClassIdArray(BaseExtensionArray[ClassIdArrayLike]):
 
     @staticmethod
     def _native_to_pa_array(data: ClassIdArrayLike, data_type: pa.DataType) -> pa.Array:
-        raise NotImplementedError
+        return classid_native_to_pa_array(data, data_type)
 
 
 ClassIdType._ARRAY_TYPE = ClassIdArray

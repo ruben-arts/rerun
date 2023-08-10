@@ -51,9 +51,7 @@ PrimitiveComponentArrayLike = Union[
 
 class PrimitiveComponentType(BaseExtensionType):
     def __init__(self) -> None:
-        pa.ExtensionType.__init__(
-            self, pa.struct([pa.field("value", pa.uint32(), False, {})]), "rerun.testing.datatypes.PrimitiveComponent"
-        )
+        pa.ExtensionType.__init__(self, pa.uint32(), "rerun.testing.datatypes.PrimitiveComponent")
 
 
 class PrimitiveComponentArray(BaseExtensionArray[PrimitiveComponentArrayLike]):
@@ -91,9 +89,7 @@ StringComponentArrayLike = Union[
 
 class StringComponentType(BaseExtensionType):
     def __init__(self) -> None:
-        pa.ExtensionType.__init__(
-            self, pa.struct([pa.field("value", pa.utf8(), False, {})]), "rerun.testing.datatypes.StringComponent"
-        )
+        pa.ExtensionType.__init__(self, pa.utf8(), "rerun.testing.datatypes.StringComponent")
 
 
 class StringComponentArray(BaseExtensionArray[StringComponentArrayLike]):

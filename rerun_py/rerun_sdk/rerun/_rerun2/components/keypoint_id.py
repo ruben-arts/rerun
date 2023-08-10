@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -38,10 +38,19 @@ class KeypointId:
         return int(self.id)
 
 
-KeypointIdLike = KeypointId
+if TYPE_CHECKING:
+    KeypointIdLike = Union[KeypointId, int]
+else:
+    KeypointIdLike = Any
+
 KeypointIdArrayLike = Union[
     KeypointId,
     Sequence[KeypointIdLike],
+    int,
+    npt.NDArray[np.uint8],
+    npt.NDArray[np.uint16],
+    npt.NDArray[np.uint32],
+    npt.NDArray[np.uint64],
 ]
 
 

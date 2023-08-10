@@ -13,6 +13,7 @@ from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
 )
+from ._overrides import color_native_to_pa_array, color_rgba_converter  # noqa: F401
 
 __all__ = ["Color", "ColorArray", "ColorArrayLike", "ColorLike", "ColorType"]
 
@@ -27,7 +28,7 @@ class Color:
     If there is an alpha, we assume it is in linear space, and separate (NOT pre-multiplied).
     """
 
-    rgba: int = field(converter=int)
+    rgba: int = field(converter=color_rgba_converter)
 
     def __array__(self, dtype: npt.DTypeLike = None) -> npt.NDArray[Any]:
         return np.asarray(self.rgba, dtype=dtype)
@@ -64,7 +65,7 @@ class ColorArray(BaseExtensionArray[ColorArrayLike]):
 
     @staticmethod
     def _native_to_pa_array(data: ColorArrayLike, data_type: pa.DataType) -> pa.Array:
-        raise NotImplementedError
+        return color_native_to_pa_array(data, data_type)
 
 
 ColorType._ARRAY_TYPE = ColorArray

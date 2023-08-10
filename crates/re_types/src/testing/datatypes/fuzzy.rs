@@ -2830,14 +2830,26 @@ impl crate::Loggable for AffixFuzzer20 {
                             let any_nones = somes.iter().any(|some| !*some);
                             any_nones.then(|| somes.into())
                         };
-                        {
-                            _ = p_bitmap;
-                            _ = extension_wrapper;
-                            crate::testing::datatypes::PrimitiveComponent::try_to_arrow_opt(
-                                p,
-                                None::<&str>,
-                            )?
-                        }
+                        PrimitiveArray::new(
+                            {
+                                _ = extension_wrapper;
+                                DataType::UInt32.to_logical_type().clone()
+                            },
+                            p.into_iter()
+                                .map(|datum| {
+                                    datum
+                                        .map(|datum| {
+                                            let crate::testing::datatypes::PrimitiveComponent(
+                                                data0,
+                                            ) = datum;
+                                            data0
+                                        })
+                                        .unwrap_or_default()
+                                })
+                                .collect(),
+                            p_bitmap,
+                        )
+                        .boxed()
                     },
                     {
                         let (somes, s): (Vec<_>, Vec<_>) = data
@@ -2855,12 +2867,41 @@ impl crate::Loggable for AffixFuzzer20 {
                             any_nones.then(|| somes.into())
                         };
                         {
-                            _ = s_bitmap;
-                            _ = extension_wrapper;
-                            crate::testing::datatypes::StringComponent::try_to_arrow_opt(
-                                s,
-                                None::<&str>,
-                            )?
+                            let inner_data: ::arrow2::buffer::Buffer<u8> = s
+                                .iter()
+                                .flatten()
+                                .flat_map(|datum| {
+                                    let crate::testing::datatypes::StringComponent(data0) = datum;
+                                    data0.0.clone()
+                                })
+                                .collect();
+                            let offsets = ::arrow2::offset::Offsets::<i32>::try_from_lengths(
+                                s.iter().map(|opt| {
+                                    opt.as_ref()
+                                        .map(|datum| {
+                                            let crate::testing::datatypes::StringComponent(data0) =
+                                                datum;
+                                            data0.0.len()
+                                        })
+                                        .unwrap_or_default()
+                                }),
+                            )
+                            .unwrap()
+                            .into();
+
+                            #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
+                            unsafe {
+                                Utf8Array::<i32>::new_unchecked(
+                                    {
+                                        _ = extension_wrapper;
+                                        DataType::Utf8.to_logical_type().clone()
+                                    },
+                                    offsets,
+                                    inner_data,
+                                    s_bitmap,
+                                )
+                            }
+                            .boxed()
                         }
                     },
                 ],
@@ -2905,21 +2946,28 @@ impl crate::Loggable for AffixFuzzer20 {
                     .collect();
                 let p = {
                     let data = &**arrays_by_name["p"];
-                    crate::testing::datatypes::PrimitiveComponent::try_from_arrow_opt(data)
-                        .map_err(|err| crate::DeserializationError::Context {
-                            location: "rerun.testing.datatypes.AffixFuzzer20#p".into(),
-                            source: Box::new(err),
-                        })?
+                    data.as_any()
+                        .downcast_ref::<UInt32Array>()
+                        .unwrap()
                         .into_iter()
+                        .map(|opt| opt.map(|v| crate::testing::datatypes::PrimitiveComponent(*v)))
                 };
                 let s = {
                     let data = &**arrays_by_name["s"];
-                    crate::testing::datatypes::StringComponent::try_from_arrow_opt(data)
-                        .map_err(|err| crate::DeserializationError::Context {
-                            location: "rerun.testing.datatypes.AffixFuzzer20#s".into(),
-                            source: Box::new(err),
-                        })?
-                        .into_iter()
+                    {
+                        let downcast = data.as_any().downcast_ref::<Utf8Array<i32>>().unwrap();
+                        let offsets = downcast.offsets();
+                        arrow2::bitmap::utils::ZipValidity::new_with_validity(
+                            offsets.iter().zip(offsets.lengths()),
+                            downcast.validity(),
+                        )
+                        .map(|elem| elem.map(|(o, l)| downcast.values().clone().sliced(*o as _, l)))
+                        .map(|opt| {
+                            opt.map(|v| {
+                                crate::testing::datatypes::StringComponent(crate::ArrowString(v))
+                            })
+                        })
+                    }
                 };
                 ::itertools::izip!(p, s)
                     .enumerate()

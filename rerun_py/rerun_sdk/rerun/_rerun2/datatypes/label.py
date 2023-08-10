@@ -11,6 +11,7 @@ from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
 )
+from ._overrides import label_native_to_pa_array  # noqa: F401
 
 __all__ = ["Label", "LabelArray", "LabelArrayLike", "LabelLike", "LabelType"]
 
@@ -47,7 +48,7 @@ class LabelArray(BaseExtensionArray[LabelArrayLike]):
 
     @staticmethod
     def _native_to_pa_array(data: LabelArrayLike, data_type: pa.DataType) -> pa.Array:
-        raise NotImplementedError
+        return label_native_to_pa_array(data, data_type)
 
 
 LabelType._ARRAY_TYPE = LabelArray
