@@ -9,7 +9,7 @@ import numpy.typing as npt
 import pyarrow as pa
 from attrs import define, field
 
-from .. import components, datatypes
+from .. import datatypes
 from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
@@ -922,24 +922,24 @@ AffixFuzzer5Type._ARRAY_TYPE = AffixFuzzer5Array
 # pa.register_extension_type(AffixFuzzer5Type())
 
 
-def _affixfuzzer20_p_converter(x: components.PrimitiveComponentLike) -> components.PrimitiveComponent:
-    if isinstance(x, components.PrimitiveComponent):
+def _affixfuzzer20_p_converter(x: datatypes.PrimitiveComponentLike) -> datatypes.PrimitiveComponent:
+    if isinstance(x, datatypes.PrimitiveComponent):
         return x
     else:
-        return components.PrimitiveComponent(x)
+        return datatypes.PrimitiveComponent(x)
 
 
-def _affixfuzzer20_s_converter(x: components.StringComponentLike) -> components.StringComponent:
-    if isinstance(x, components.StringComponent):
+def _affixfuzzer20_s_converter(x: datatypes.StringComponentLike) -> datatypes.StringComponent:
+    if isinstance(x, datatypes.StringComponent):
         return x
     else:
-        return components.StringComponent(x)
+        return datatypes.StringComponent(x)
 
 
 @define
 class AffixFuzzer20:
-    p: components.PrimitiveComponent = field(converter=_affixfuzzer20_p_converter)
-    s: components.StringComponent = field(converter=_affixfuzzer20_s_converter)
+    p: datatypes.PrimitiveComponent = field(converter=_affixfuzzer20_p_converter)
+    s: datatypes.StringComponent = field(converter=_affixfuzzer20_s_converter)
 
 
 AffixFuzzer20Like = AffixFuzzer20
@@ -956,7 +956,12 @@ class AffixFuzzer20Type(BaseExtensionType):
     def __init__(self) -> None:
         pa.ExtensionType.__init__(
             self,
-            pa.struct([pa.field("p", pa.uint32(), False, {}), pa.field("s", pa.utf8(), False, {})]),
+            pa.struct(
+                [
+                    pa.field("p", pa.struct([pa.field("value", pa.uint32(), False, {})]), False, {}),
+                    pa.field("s", pa.struct([pa.field("value", pa.utf8(), False, {})]), False, {}),
+                ]
+            ),
             "rerun.testing.datatypes.AffixFuzzer20",
         )
 

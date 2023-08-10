@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence, Union
 
 import pyarrow as pa
 from attrs import define, field
@@ -11,14 +11,13 @@ from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
 )
-from ._overrides import label_native_to_pa_array  # noqa: F401
 
 __all__ = ["Label", "LabelArray", "LabelArrayLike", "LabelLike", "LabelType"]
 
 
 @define
 class Label:
-    """A String label component."""
+    """A String label datatype."""
 
     value: str = field(converter=str)
 
@@ -26,11 +25,12 @@ class Label:
         return str(self.value)
 
 
-LabelLike = Label
-LabelArrayLike = Union[
-    Label,
-    Sequence[LabelLike],
-]
+if TYPE_CHECKING:
+    LabelLike = Union[Label, str]
+else:
+    LabelLike = Any
+
+LabelArrayLike = Union[Label, Sequence[LabelLike], str, Sequence[str]]
 
 
 # --- Arrow support ---
@@ -47,7 +47,7 @@ class LabelArray(BaseExtensionArray[LabelArrayLike]):
 
     @staticmethod
     def _native_to_pa_array(data: LabelArrayLike, data_type: pa.DataType) -> pa.Array:
-        return label_native_to_pa_array(data, data_type)
+        raise NotImplementedError
 
 
 LabelType._ARRAY_TYPE = LabelArray

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Union
+from typing import TYPE_CHECKING, Any, Sequence, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -13,7 +13,6 @@ from .._baseclasses import (
     BaseExtensionArray,
     BaseExtensionType,
 )
-from ._overrides import keypointid_native_to_pa_array  # noqa: F401
 
 __all__ = ["KeypointId", "KeypointIdArray", "KeypointIdArrayLike", "KeypointIdLike", "KeypointIdType"]
 
@@ -38,10 +37,19 @@ class KeypointId:
         return int(self.id)
 
 
-KeypointIdLike = KeypointId
+if TYPE_CHECKING:
+    KeypointIdLike = Union[KeypointId, int]
+else:
+    KeypointIdLike = Any
+
 KeypointIdArrayLike = Union[
     KeypointId,
     Sequence[KeypointIdLike],
+    int,
+    npt.NDArray[np.uint8],
+    npt.NDArray[np.uint16],
+    npt.NDArray[np.uint32],
+    npt.NDArray[np.uint64],
 ]
 
 
@@ -50,16 +58,16 @@ KeypointIdArrayLike = Union[
 
 class KeypointIdType(BaseExtensionType):
     def __init__(self) -> None:
-        pa.ExtensionType.__init__(self, pa.uint16(), "rerun.keypoint_id")
+        pa.ExtensionType.__init__(self, pa.uint16(), "rerun.datatypes.KeypointId")
 
 
 class KeypointIdArray(BaseExtensionArray[KeypointIdArrayLike]):
-    _EXTENSION_NAME = "rerun.keypoint_id"
+    _EXTENSION_NAME = "rerun.datatypes.KeypointId"
     _EXTENSION_TYPE = KeypointIdType
 
     @staticmethod
     def _native_to_pa_array(data: KeypointIdArrayLike, data_type: pa.DataType) -> pa.Array:
-        return keypointid_native_to_pa_array(data, data_type)
+        raise NotImplementedError
 
 
 KeypointIdType._ARRAY_TYPE = KeypointIdArray
