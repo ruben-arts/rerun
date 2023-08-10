@@ -48,7 +48,7 @@ namespace rerun {
             }
 
             {
-                auto field_builder = static_cast<arrow::StructBuilder *>(builder->field_builder(0));
+                auto field_builder = static_cast<arrow::UInt32Builder *>(builder->field_builder(0));
                 ARROW_RETURN_NOT_OK(field_builder->Reserve(num_elements));
                 for (auto elem_idx = 0; elem_idx < num_elements; elem_idx += 1) {
                     ARROW_RETURN_NOT_OK(
@@ -61,7 +61,7 @@ namespace rerun {
                 }
             }
             {
-                auto field_builder = static_cast<arrow::StructBuilder *>(builder->field_builder(1));
+                auto field_builder = static_cast<arrow::StringBuilder *>(builder->field_builder(1));
                 ARROW_RETURN_NOT_OK(field_builder->Reserve(num_elements));
                 for (auto elem_idx = 0; elem_idx < num_elements; elem_idx += 1) {
                     ARROW_RETURN_NOT_OK(rerun::datatypes::StringComponent::fill_arrow_array_builder(

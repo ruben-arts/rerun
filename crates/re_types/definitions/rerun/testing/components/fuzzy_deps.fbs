@@ -10,16 +10,20 @@ namespace rerun.testing.datatypes;
 // circular dependency when importing them into `datatypes/fuzzy.fbs`.
 
 struct PrimitiveComponent (
+  "attr.arrow.transparent",
   "attr.rust.derive": "Eq, PartialEq",
   "attr.rust.repr": "transparent",
+  "attr.rust.tuple_struct",
   order: 001
 ) {
   value: uint (order: 100);
 }
 
 table StringComponent (
+  "attr.arrow.transparent",
   "attr.rust.derive": "Eq, PartialEq",
   "attr.rust.repr": "transparent",
+  "attr.rust.tuple_struct",
   order: 002
 ) {
   value: string (order: 100);

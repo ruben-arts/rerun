@@ -7,30 +7,22 @@
 
 namespace rerun {
     namespace datatypes {
-        const std::shared_ptr<arrow::DataType> &PrimitiveComponent::to_arrow_datatype() {
-            static const auto datatype = arrow::struct_({
-                arrow::field("value", arrow::uint32(), false),
-            });
+        const std::shared_ptr<arrow::DataType>& PrimitiveComponent::to_arrow_datatype() {
+            static const auto datatype = arrow::uint32();
             return datatype;
         }
 
-        arrow::Result<std::shared_ptr<arrow::StructBuilder>>
-            PrimitiveComponent::new_arrow_array_builder(arrow::MemoryPool *memory_pool) {
+        arrow::Result<std::shared_ptr<arrow::UInt32Builder>>
+            PrimitiveComponent::new_arrow_array_builder(arrow::MemoryPool* memory_pool) {
             if (!memory_pool) {
                 return arrow::Status::Invalid("Memory pool is null.");
             }
 
-            return arrow::Result(std::make_shared<arrow::StructBuilder>(
-                to_arrow_datatype(),
-                memory_pool,
-                std::vector<std::shared_ptr<arrow::ArrayBuilder>>({
-                    std::make_shared<arrow::UInt32Builder>(memory_pool),
-                })
-            ));
+            return arrow::Result(std::make_shared<arrow::UInt32Builder>(memory_pool));
         }
 
         arrow::Status PrimitiveComponent::fill_arrow_array_builder(
-            arrow::StructBuilder *builder, const PrimitiveComponent *elements, size_t num_elements
+            arrow::UInt32Builder* builder, const PrimitiveComponent* elements, size_t num_elements
         ) {
             if (!builder) {
                 return arrow::Status::Invalid("Passed array builder is null.");
@@ -39,14 +31,8 @@ namespace rerun {
                 return arrow::Status::Invalid("Cannot serialize null pointer to arrow array.");
             }
 
-            {
-                auto field_builder = static_cast<arrow::UInt32Builder *>(builder->field_builder(0));
-                ARROW_RETURN_NOT_OK(field_builder->Reserve(num_elements));
-                for (auto elem_idx = 0; elem_idx < num_elements; elem_idx += 1) {
-                    ARROW_RETURN_NOT_OK(field_builder->Append(elements[elem_idx].value));
-                }
-            }
-            ARROW_RETURN_NOT_OK(builder->AppendValues(num_elements, nullptr));
+            static_assert(sizeof(*elements) == sizeof(elements->value));
+            ARROW_RETURN_NOT_OK(builder->AppendValues(&elements->value, num_elements));
 
             return arrow::Status::OK();
         }
