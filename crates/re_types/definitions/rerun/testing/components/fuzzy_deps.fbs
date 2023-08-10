@@ -2,7 +2,7 @@ include "arrow/attributes.fbs";
 include "fbs/attributes.fbs";
 include "rust/attributes.fbs";
 
-namespace rerun.testing.components;
+namespace rerun.testing.datatypes;
 
 // These are some simple component definitions specifically for
 // testing datatypes and components that depend on other components.
