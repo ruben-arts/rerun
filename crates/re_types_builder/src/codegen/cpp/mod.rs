@@ -343,6 +343,7 @@ impl QuotedObject {
         let (constants_hpp, constants_cpp) =
             quote_constants_header_and_cpp(obj, objects, &type_ident);
         let mut methods = Vec::new();
+        let mut methods_serialize_utils = Vec::new();
 
         match obj.kind {
             ObjectKind::Datatype | ObjectKind::Component => {
@@ -357,13 +358,18 @@ impl QuotedObject {
 
                 // Arrow serialization methods.
                 // TODO(andreas): These are just utilities for to_data_cell. How do we hide them best from the public header?
-                methods.push(arrow_data_type_method(obj, objects, &mut cpp_includes));
-                methods.push(new_arrow_array_builder_method(
+                methods_serialize_utils.push(arrow_data_type_method(
+                    obj,
+                    objects,
+                    &mut cpp_includes,
+                    &mut hpp_declarations,
+                ));
+                methods_serialize_utils.push(new_arrow_array_builder_method(
                     obj,
                     objects,
                     &mut cpp_includes,
                 ));
-                methods.push(fill_arrow_array_builder_method(
+                methods_serialize_utils.push(fill_arrow_array_builder_method(
                     obj,
                     &type_ident,
                     &mut cpp_includes,
@@ -534,6 +540,10 @@ impl QuotedObject {
                     #(#methods_hpp)*
             }
         };
+
+        let (serialization_utils_hpp, serialization_utils_cpp) =
+            quote_serialization_util_namespace_hpp_cpp(&methods_serialize_utils, type_name);
+
         let hpp = quote! {
             #hpp_includes
 
@@ -551,6 +561,8 @@ impl QuotedObject {
 
                         #hpp_method_section
                     };
+
+                    #serialization_utils_hpp
                 }
             }
         };
@@ -564,6 +576,8 @@ impl QuotedObject {
                     #(#constants_cpp;)*
 
                     #(#methods_cpp)*
+
+                    #serialization_utils_cpp
                 }
             }
         };
@@ -602,12 +616,12 @@ impl QuotedObject {
             obj.fqname
         );
         let namespace_ident = format_ident!("{}", obj.kind.plural_snake_case()); // `datatypes` or `components`
-        let pascal_case_name = &obj.name;
-        let pascal_case_ident = format_ident!("{pascal_case_name}"); // The PascalCase name of the object type.
+        let type_name = &obj.name;
+        let type_ident = format_ident!("{type_name}"); // The PascalCase name of the object type.
         let quoted_docs = quote_docstrings(&obj.docs);
 
-        let tag_typename = format_ident!("{pascal_case_name}Tag");
-        let data_typename = format_ident!("{pascal_case_name}Data");
+        let tag_typename = format_ident!("{type_name}Tag");
+        let data_typename = format_ident!("{type_name}Data");
 
         let tag_fields = std::iter::once({
             let comment = quote_doc_comment(
@@ -657,8 +671,9 @@ impl QuotedObject {
             .collect_vec();
 
         let (constants_hpp, constants_cpp) =
-            quote_constants_header_and_cpp(obj, objects, &pascal_case_ident);
+            quote_constants_header_and_cpp(obj, objects, &type_ident);
         let mut methods = Vec::new();
+        let mut methods_serialize_utils = Vec::new();
 
         // Add one static constructor for every field.
         for obj_field in &obj.fields {
@@ -666,7 +681,7 @@ impl QuotedObject {
                 objects,
                 &mut hpp_includes,
                 obj_field,
-                &pascal_case_ident,
+                &type_ident,
                 &tag_typename,
             ));
         }
@@ -680,8 +695,8 @@ impl QuotedObject {
 
                 methods.push(Method {
                     docs: obj_field.docs.clone().into(),
-                    declaration: MethodDeclaration::constructor(quote!(#pascal_case_ident(#param_declaration))),
-                    definition_body: quote!(*this = #pascal_case_ident::#snake_case_ident(std::move(#snake_case_ident));),
+                    declaration: MethodDeclaration::constructor(quote!(#type_ident(#param_declaration))),
+                    definition_body: quote!(*this = #type_ident::#snake_case_ident(std::move(#snake_case_ident));),
                     inline: true,
                 });
             }
@@ -690,15 +705,20 @@ impl QuotedObject {
             // `enum Angle { Radians(f32), Degrees(f32) };`
         };
 
-        methods.push(arrow_data_type_method(obj, objects, &mut cpp_includes));
-        methods.push(new_arrow_array_builder_method(
+        methods_serialize_utils.push(arrow_data_type_method(
+            obj,
+            objects,
+            &mut cpp_includes,
+            &mut hpp_declarations,
+        ));
+        methods_serialize_utils.push(new_arrow_array_builder_method(
             obj,
             objects,
             &mut cpp_includes,
         ));
-        methods.push(fill_arrow_array_builder_method(
+        methods_serialize_utils.push(fill_arrow_array_builder_method(
             obj,
-            &pascal_case_ident,
+            &type_ident,
             &mut cpp_includes,
             objects,
         ));
@@ -755,7 +775,7 @@ impl QuotedObject {
             .collect_vec();
 
             quote! {
-                ~#pascal_case_ident() {
+                ~#type_ident() {
                     switch (this->_tag) {
                         #(#destructor_match_arms)*
                     }
@@ -794,11 +814,11 @@ impl QuotedObject {
             };
 
             if copy_match_arms.is_empty() {
-                quote!(#pascal_case_ident(const #pascal_case_ident& other) : _tag(other._tag) {
+                quote!(#type_ident(const #type_ident& other) : _tag(other._tag) {
                     #trivial_memcpy
                 })
             } else {
-                quote!(#pascal_case_ident(const #pascal_case_ident& other) : _tag(other._tag) {
+                quote!(#type_ident(const #type_ident& other) : _tag(other._tag) {
                     switch (other._tag) {
                         #(#copy_match_arms)*
 
@@ -814,6 +834,10 @@ impl QuotedObject {
         let swap_comment = quote_comment("This bitwise swap would fail for self-referential types, but we don't have any of those.");
 
         let methods_hpp = methods.iter().map(|m| m.to_hpp_tokens());
+
+        let (serialization_utils_hpp, serialization_utils_cpp) =
+            quote_serialization_util_namespace_hpp_cpp(&methods_serialize_utils, type_name);
+
         let hpp = quote! {
             #hpp_includes
 
@@ -849,27 +873,27 @@ impl QuotedObject {
                     }
 
                     #quoted_docs
-                    struct #pascal_case_ident {
+                    struct #type_ident {
                         #(#constants_hpp;)*
 
-                        #pascal_case_ident() : _tag(detail::#tag_typename::NONE) {}
+                        #type_ident() : _tag(detail::#tag_typename::NONE) {}
 
                         #copy_constructor
 
                         // Copy-assignment
-                        #pascal_case_ident& operator=(const #pascal_case_ident& other) noexcept {
-                            #pascal_case_ident tmp(other);
+                        #type_ident& operator=(const #type_ident& other) noexcept {
+                            #type_ident tmp(other);
                             this->swap(tmp);
                             return *this;
                         }
 
                         // Move-constructor:
-                        #pascal_case_ident(#pascal_case_ident&& other) noexcept : _tag(detail::#tag_typename::NONE) {
+                        #type_ident(#type_ident&& other) noexcept : _tag(detail::#tag_typename::NONE) {
                             this->swap(other);
                         }
 
                         // Move-assignment:
-                        #pascal_case_ident& operator=(#pascal_case_ident&& other) noexcept {
+                        #type_ident& operator=(#type_ident&& other) noexcept {
                             this->swap(other);
                             return *this;
                         }
@@ -879,7 +903,7 @@ impl QuotedObject {
                         #hpp_type_extensions
 
                         // This is useful for easily implementing the move constructor and assignment operators:
-                        void swap(#pascal_case_ident& other) noexcept {
+                        void swap(#type_ident& other) noexcept {
                             // Swap tags:
                             auto tag_temp = this->_tag;
                             this->_tag = other._tag;
@@ -895,11 +919,13 @@ impl QuotedObject {
                         detail::#tag_typename _tag;
                         detail::#data_typename _data;
                     };
+
+                    #serialization_utils_hpp
                 }
             }
         };
 
-        let cpp_methods = methods.iter().map(|m| m.to_cpp_tokens(&pascal_case_ident));
+        let cpp_methods = methods.iter().map(|m| m.to_cpp_tokens(&type_ident));
         let cpp = quote! {
             #cpp_includes
 
@@ -908,6 +934,8 @@ impl QuotedObject {
             namespace rerun {
                 namespace #namespace_ident {
                     #(#cpp_methods)*
+
+                    #serialization_utils_cpp
                 }
             }
         };
@@ -1127,6 +1155,7 @@ fn component_to_data_cell_method(
     cpp_includes.system.insert("arrow/api.h".to_owned());
 
     let todo_pool = quote_comment("TODO(andreas): Allow configuring the memory pool.");
+    let serialize_ns = serialize_utils_namespace(type_ident);
 
     Method {
         docs: format!("Creates a Rerun DataCell from an array of {type_ident} components.").into(),
@@ -1143,9 +1172,11 @@ fn component_to_data_cell_method(
             arrow::MemoryPool* pool = arrow::default_memory_pool();
             #NEWLINE_TOKEN
             #NEWLINE_TOKEN
-            ARROW_ASSIGN_OR_RAISE(auto builder, #type_ident::new_arrow_array_builder(pool));
+            auto builder_result = #serialize_ns::new_arrow_array_builder(pool);
+            RR_RETURN_NOT_OK(builder_result.error);
+            auto builder = std::move(builder_result.value);
             if (instances && num_instances > 0) {
-                ARROW_RETURN_NOT_OK(#type_ident::fill_arrow_array_builder(
+                RR_RETURN_NOT_OK(#serialize_ns::fill_arrow_array_builder(
                     builder.get(),
                     instances,
                     num_instances
@@ -1157,7 +1188,7 @@ fn component_to_data_cell_method(
             #NEWLINE_TOKEN
             auto schema = arrow::schema({arrow::field(
                 #type_ident::NAME, // Unused, but should be the name of the field in the archetype if any.
-                #type_ident::to_arrow_datatype(),
+                #serialize_ns::to_arrow_datatype(),
                 false
             )});
             #NEWLINE_TOKEN
@@ -1186,7 +1217,7 @@ fn archetype_to_data_cells(
     hpp_includes.local.insert("../result.hpp".to_owned());
     cpp_includes.system.insert("arrow/api.h".to_owned());
 
-    // TODO(andreas): Splats need to be handled separately.
+    // TODO(#3040): Splats need to be handled separately.
 
     let num_fields = quote_integer(obj.fields.len());
     let push_cells = obj.fields.iter().map(|field| {
@@ -1273,6 +1304,7 @@ fn quote_fill_arrow_array_builder(
             } else {
                 // Trivial forwarding to inner type.
                 let quoted_fqname = quote_fqname_as_type_path(includes, fqname);
+                let serialize_ns = serialize_utils_namespace(type_ident);
                 quote! {
                     static_assert(sizeof(#quoted_fqname) == sizeof(#type_ident));
                     ARROW_RETURN_NOT_OK(#quoted_fqname::fill_arrow_array_builder(
@@ -2102,5 +2134,42 @@ fn quote_arrow_elem_type(
 
     quote! {
         arrow::field("item", #datatype, false)
+    }
+}
+
+fn serialize_utils_namespace(type_ident: &Ident) -> Ident {
+    format_ident!("{type_ident}SerializationUtils")
+}
+
+fn quote_serialization_util_namespace_hpp_cpp(
+    methods_serialize_utils: &[Method],
+    type_ident: &Ident,
+) -> (TokenStream, TokenStream) {
+    if !methods_serialize_utils.is_empty() {
+        let namespace_ident = serialize_utils_namespace(type_ident);
+
+        let doc = quote_doc_comment(&format!(
+            "Serialization utilities for arrays of {type_ident}"
+        ));
+        let methods_hpp = methods_serialize_utils.iter().map(|m| m.to_hpp_tokens());
+        let hpp = quote! {
+            #NEWLINE_TOKEN
+            #NEWLINE_TOKEN
+            #doc
+            namespace #namespace_ident {
+                #(#methods_hpp)*
+            }
+        };
+
+        let methods_cpp = methods_serialize_utils
+            .iter()
+            .map(|m| m.to_cpp_tokens(&namespace_ident));
+        let cpp = quote! {
+            #(#methods_cpp)*
+        };
+
+        (hpp, cpp)
+    } else {
+        (quote!(), quote!())
     }
 }
