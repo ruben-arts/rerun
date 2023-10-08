@@ -223,3 +223,11 @@ debug = true
 # If that is not possible, patch to a branch that has a PR open on the upstream repo.
 # As a last resport, patch with a commit to our own repository.
 # ALWAYS document what PR the commit hash is part of, or when it was merged into the upstream trunk.
+ecolor = { path = "../../egui/crates/ecolor" }
+eframe = { path = "../../egui/crates/eframe" }
+egui = { path = "../../egui/crates/egui" }
+egui-wgpu = { path = "../../egui/crates/egui-wgpu" }
+emath = { path = "../../egui/crates/emath" }
+epaint = { path = "../../egui/crates/epaint" }
+wgpu = { git = "https://github.com/gents83/wgpu.git", commit = "b7e518a" }
+wgpu-core = { git = "https://github.com/gents83/wgpu.git", commit = "b7e518a" }
