@@ -69,7 +69,7 @@ def test_bad_tensors() -> None:
 
     # No buffers
     with pytest.raises(ValueError):
-        TensorData(),
+        TensorData()
 
     # Buffer with no indication of shape
     with pytest.raises(ValueError):
