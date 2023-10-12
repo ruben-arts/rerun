@@ -75,11 +75,14 @@
     "python.analysis.extraPaths": [
         "rerun_py/rerun_sdk"
     ],
-    "ruff.args": [
-        "--config",
-        "rerun_py/pyproject.toml"
-    ],
     "cmake.buildDirectory": "${workspaceRoot}/build/",
     "C_Cpp.autoAddFileAssociations": false,
-    "rust-analyzer.showUnlinkedFileNotification": false
+    "rust-analyzer.showUnlinkedFileNotification": false,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "ruff.format.args": [
+        "--config=rerun_py/pyproject.toml"
+    ],
+    "ruff.lint.args": [
+        "--config=rerun_py/pyproject.toml"
+    ]
 }
