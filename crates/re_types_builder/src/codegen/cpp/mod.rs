@@ -323,7 +323,7 @@ impl QuotedObject {
     ) -> Self {
         match obj.specifics {
             crate::ObjectSpecifics::Struct => match obj.kind {
-                ObjectKind::Datatype | ObjectKind::Component => {
+                ObjectKind::Datatype | ObjectKind::Component | ObjectKind::Blueprint => {
                     Self::from_struct(objects, obj, hpp_includes, hpp_type_extensions)
                 }
                 ObjectKind::Archetype => {
@@ -1846,7 +1846,7 @@ fn quote_constants_header_and_cpp(
                 quote!(const char #obj_type_ident::INDICATOR_COMPONENT_NAME[] = #indicator_fqname),
             );
         }
-        ObjectKind::Datatype => {}
+        ObjectKind::Datatype | ObjectKind::Blueprint => {}
     }
 
     (hpp, cpp)

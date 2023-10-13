@@ -53,6 +53,7 @@ impl CodeGenerator for DocsCodeGenerator {
                 ObjectKind::Datatype => datatypes.push(object),
                 ObjectKind::Component => components.push(object),
                 ObjectKind::Archetype => archetypes.push(object),
+                ObjectKind::Blueprint => continue, // skip blueprint stuff, too early
             }
 
             let page = object_page(reporter, object, object_map);
@@ -154,6 +155,7 @@ fn object_page(reporter: &Reporter, object: &Object, object_map: &ObjectMap) -> 
             write_fields(&mut page, object, object_map);
         }
         ObjectKind::Archetype => write_archetype_fields(&mut page, object, object_map),
+        ObjectKind::Blueprint => {}
     }
 
     {
@@ -186,7 +188,7 @@ fn object_page(reporter: &Reporter, object: &Object, object_map: &ObjectMap) -> 
             putln!(page);
             write_used_by(&mut page, reporter, object, object_map);
         }
-        ObjectKind::Archetype => {}
+        ObjectKind::Blueprint | ObjectKind::Archetype => {}
     }
 
     page
