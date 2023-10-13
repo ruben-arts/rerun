@@ -10,6 +10,7 @@ from .auto_space_views import (
     AutoSpaceViewsType,
 )
 from .panel_view import PanelView, PanelViewArrayLike, PanelViewBatch, PanelViewLike, PanelViewType
+from .space_view import SpaceView, SpaceViewArrayLike, SpaceViewBatch, SpaceViewLike, SpaceViewType
 
 __all__ = [
     "AutoSpaceViews",
@@ -22,4 +23,9 @@ __all__ = [
     "PanelViewBatch",
     "PanelViewLike",
     "PanelViewType",
+    "SpaceView",
+    "SpaceViewArrayLike",
+    "SpaceViewBatch",
+    "SpaceViewLike",
+    "SpaceViewType",
 ]

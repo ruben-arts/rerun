@@ -28,6 +28,7 @@ archetypes/view_coordinates.py linguist-generated=true
 blueprint/__init__.py linguist-generated=true
 blueprint/auto_space_views.py linguist-generated=true
 blueprint/panel_view.py linguist-generated=true
+blueprint/space_view.py linguist-generated=true
 components/__init__.py linguist-generated=true
 components/annotation_context.py linguist-generated=true
 components/blob.py linguist-generated=true

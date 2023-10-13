@@ -3,6 +3,8 @@
 mod auto_space_views;
 mod panel_view;
 mod panel_view_ext;
+mod space_view;
 
 pub use self::auto_space_views::AutoSpaceViews;
 pub use self::panel_view::PanelView;
+pub use self::space_view::SpaceView;

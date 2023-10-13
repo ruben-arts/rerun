@@ -2,7 +2,7 @@ use arrow2::datatypes::DataType;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-use crate::{ArrowRegistry, Object, Objects};
+use crate::{ArrowRegistry, Object, ObjectField, Objects};
 
 use super::{
     arrow::{is_backed_by_arrow_buffer, quote_fqname_as_type_path},
@@ -78,6 +78,7 @@ pub fn quote_arrow_serializer(
             datatype,
             &quoted_datatype,
             obj_field.is_nullable,
+            Some(obj_field),
             &bitmap_dst,
             &quoted_data_dst,
             InnerRepr::NativeIterable,
@@ -128,6 +129,7 @@ pub fn quote_arrow_serializer(
                         inner_datatype,
                         &quoted_inner_datatype,
                         obj_field.is_nullable,
+                        Some(obj_field),
                         &bitmap_dst,
                         &data_dst,
                         InnerRepr::NativeIterable,
@@ -194,6 +196,7 @@ pub fn quote_arrow_serializer(
                         inner_datatype,
                         &quoted_inner_datatype,
                         obj_field.is_nullable,
+                        Some(obj_field),
                         &bitmap_dst,
                         &data_dst,
                         InnerRepr::NativeIterable
@@ -332,6 +335,7 @@ fn quote_arrow_field_serializer(
     datatype: &DataType,
     quoted_datatype: &dyn quote::ToTokens,
     is_nullable: bool,
+    obj_field: Option<&ObjectField>,
     bitmap_src: &proc_macro2::Ident,
     data_src: &proc_macro2::Ident,
     inner_repr: InnerRepr,
@@ -506,6 +510,18 @@ fn quote_arrow_field_serializer(
                 InnerRepr::NativeIterable
             };
 
+            let serde_type = obj_field
+                .and_then(|obj_field| obj_field.try_get_attr::<String>("attr.rust.serde_type"));
+            if let Some(serde_type) = serde_type {
+                return quote! {{
+                    let mut buf = Vec::new();
+                    rmp_serde::encode::write_named(&mut buf, v).map_err(|err| {
+                        arrow2::error::Error::ExternalFormat(format!("Could not encode as rmp: {err}"))
+                    })?;
+                    BinaryArray::<i32>::from_slice(buf.as_slice())
+                }};
+            }
+
             let quoted_inner_data = format_ident!("{data_src}_inner_data");
             let quoted_inner_bitmap = format_ident!("{data_src}_inner_bitmap");
 
@@ -514,6 +530,7 @@ fn quote_arrow_field_serializer(
                 inner_datatype,
                 &quoted_inner_datatype,
                 inner.is_nullable,
+                None,
                 &quoted_inner_bitmap,
                 &quoted_inner_data,
                 inner_repr,

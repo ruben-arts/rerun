@@ -1,0 +1,19 @@
+include "arrow/attributes.fbs";
+include "python/attributes.fbs";
+include "rust/attributes.fbs";
+
+include "rerun/datatypes.fbs";
+include "rerun/attributes.fbs";
+
+namespace rerun.blueprint;
+
+// ---
+
+/// A view of a space.
+///
+/// Unstable. Used for the ongoing blueprint experimentations.
+table SpaceView (
+  "attr.rust.derive": ""
+) {
+  space_view: [ubyte] (order: 100, "attr.rust.serde_type": "::re_viewport::SpaceViewBlueprint");
+}
