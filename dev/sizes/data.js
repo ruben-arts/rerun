@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1697195547219,
+  "lastUpdate": 1697443583887,
   "repoUrl": "https://github.com/rerun-io/rerun",
   "entries": {
     "Sizes": [
@@ -437,6 +437,75 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/rerun-io/rerun/commit/4556d4fec94f267cd74d387c4e757b0950c6ae76"
         },
         "date": 1697195535183,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Wasm",
+            "value": "15.34",
+            "unit": "MiB"
+          },
+          {
+            "name": "JS",
+            "value": "113.32",
+            "unit": "kiB"
+          },
+          {
+            "name": "arkit_scenes.rrd",
+            "value": "40.37",
+            "unit": "MiB"
+          },
+          {
+            "name": "detect_and_track_objects.rrd",
+            "value": "55.19",
+            "unit": "MiB"
+          },
+          {
+            "name": "dicom_mri.rrd",
+            "value": "63.36",
+            "unit": "MiB"
+          },
+          {
+            "name": "dna.rrd",
+            "value": "0.62",
+            "unit": "MiB"
+          },
+          {
+            "name": "human_pose_tracking.rrd",
+            "value": "54.41",
+            "unit": "MiB"
+          },
+          {
+            "name": "plots.rrd",
+            "value": "0.19",
+            "unit": "MiB"
+          },
+          {
+            "name": "structure_from_motion.rrd",
+            "value": "6.85",
+            "unit": "MiB"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jeremy@rerun.io",
+            "name": "Jeremy Leibs",
+            "username": "jleibs"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca078faed6af31e54d326eae0a45fe0951caf20e",
+          "message": "Add `pixi` to run codegen in a portable way (#3707)\n\n### What\r\n* Part of https://github.com/rerun-io/rerun/issues/3717\r\n\r\nAdd a proof-of-concept `pixi.toml` file for the project.\r\n\r\nThis is like Just but also takes care of dependency management for us.\r\nNo need to run `setup_dev.sh` or `pip install -r\r\nscripts/requirements-dev.txt`.\r\n\r\nThis even manages the installation of `arrow-cpp` for us.\r\n\r\nJust:\r\n```\r\ncargo install pixi\r\n```\r\n\r\nThen have fun:\r\n```\r\npixi run codegen\r\npixi run py-test\r\npixi run cpp-test\r\n```\r\n\r\nVerified this works in a clean Ubuntu-20.04 docker container. \r\n\r\n### Checklist\r\n* [x] I have read and agree to [Contributor\r\nGuide](https://github.com/rerun-io/rerun/blob/main/CONTRIBUTING.md) and\r\nthe [Code of\r\nConduct](https://github.com/rerun-io/rerun/blob/main/CODE_OF_CONDUCT.md)\r\n* [x] I've included a screenshot or gif (if applicable)\r\n* [x] I have tested [demo.rerun.io](https://demo.rerun.io/pr/3707) (if\r\napplicable)\r\n\r\n- [PR Build Summary](https://build.rerun.io/pr/3707)\r\n- [Docs\r\npreview](https://rerun.io/preview/071e0d4c0cff28c2262b966d985cf0f68ad9f456/docs)\r\n<!--DOCS-PREVIEW-->\r\n- [Examples\r\npreview](https://rerun.io/preview/071e0d4c0cff28c2262b966d985cf0f68ad9f456/examples)\r\n<!--EXAMPLES-PREVIEW-->\r\n- [Recent benchmark results](https://ref.rerun.io/dev/bench/)\r\n- [Wasm size tracking](https://ref.rerun.io/dev/sizes/)\r\n\r\n---------\r\n\r\nCo-authored-by: Emil Ernerfeldt <emil.ernerfeldt@gmail.com>\r\nCo-authored-by: Andreas Reich <r_andreas2@web.de>",
+          "timestamp": "2023-10-16T09:26:16+02:00",
+          "tree_id": "decf48962b0823621f74b948bc1f0e85ecca610f",
+          "url": "https://github.com/rerun-io/rerun/commit/ca078faed6af31e54d326eae0a45fe0951caf20e"
+        },
+        "date": 1697443572052,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
