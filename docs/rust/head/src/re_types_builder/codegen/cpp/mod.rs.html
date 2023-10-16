@@ -2174,6 +2174,8 @@
 <a href="#2174" id="2174">2174</a>
 <a href="#2175" id="2175">2175</a>
 <a href="#2176" id="2176">2176</a>
+<a href="#2177" id="2177">2177</a>
+<a href="#2178" id="2178">2178</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>array_builder;
 <span class="kw">mod </span>forward_decl;
 <span class="kw">mod </span>includes;
@@ -2187,12 +2189,14 @@
 <span class="kw">use </span>quote::{format_ident, quote};
 <span class="kw">use </span>rayon::prelude::<span class="kw-2">*</span>;
 
-<span class="kw">use </span><span class="kw">crate</span>::codegen::common::write_file;
 <span class="kw">use crate</span>::{
-    codegen::{autogen_warning, common::collect_examples_for_api_docs},
-    ArrowRegistry, Docs, ElementType, ObjectField, ObjectKind, Objects, Type,
+    codegen::{
+        autogen_warning,
+        common::{collect_examples_for_api_docs, write_file},
+    },
+    format_path, ArrowRegistry, Docs, ElementType, Object, ObjectField, ObjectKind,
+    ObjectSpecifics, Objects, Reporter, Type, ATTR_CPP_NO_FIELD_CTORS,
 };
-<span class="kw">use crate</span>::{Object, ObjectSpecifics, Reporter, ATTR_CPP_NO_FIELD_CTORS};
 
 <span class="kw">use </span><span class="self">self</span>::array_builder::{
     arrow_array_builder_type, arrow_array_builder_type_object,
@@ -2229,7 +2233,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>code = String::new();
     code.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;// {}\n&quot;</span>, <span class="macro">autogen_warning!</span>()));
     <span class="kw">if let </span><span class="prelude-val">Some</span>(source_path) = source_path {
-        code.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;// Based on {source_path:?}.\n&quot;</span>));
+        code.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;// Based on {:?}.\n&quot;</span>, format_path(source_path)));
     }
 
     code.push(<span class="string">&#39;\n&#39;</span>);

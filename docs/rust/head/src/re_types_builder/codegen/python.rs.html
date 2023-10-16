@@ -1943,8 +1943,8 @@
         common::{collect_examples_for_api_docs, Example},
         StringExt <span class="kw">as _</span>,
     },
-    ArrowRegistry, CodeGenerator, Docs, ElementType, Object, ObjectField, ObjectKind, Objects,
-    Reporter, Type, ATTR_PYTHON_ALIASES, ATTR_PYTHON_ARRAY_ALIASES,
+    format_path, ArrowRegistry, CodeGenerator, Docs, ElementType, Object, ObjectField, ObjectKind,
+    Objects, Reporter, Type, ATTR_PYTHON_ALIASES, ATTR_PYTHON_ARRAY_ALIASES,
 };
 
 <span class="kw">use </span><span class="kw">super</span>::common::ExampleInfo;
@@ -2259,7 +2259,7 @@
             <span class="kw">let </span><span class="kw-2">mut </span>code = String::new();
             code.push_text(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;# {}&quot;</span>, <span class="macro">autogen_warning!</span>()), <span class="number">1</span>, <span class="number">0</span>);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(source_path) = obj.relative_filepath() {
-                code.push_text(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;# Based on {source_path:?}.&quot;</span>), <span class="number">2</span>, <span class="number">0</span>);
+                code.push_text(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;# Based on {:?}.&quot;</span>, format_path(source_path)), <span class="number">2</span>, <span class="number">0</span>);
                 code.push_text(
                     <span class="kw-2">&amp;</span><span class="macro">format!</span>(
                         <span class="string">&quot;# You can extend this class by creating a {:?} class in {:?}.&quot;</span>,

@@ -1304,8 +1304,8 @@
         },
         StringExt <span class="kw">as _</span>,
     },
-    ArrowRegistry, CodeGenerator, Docs, ElementType, Object, ObjectField, ObjectKind, Objects,
-    Reporter, Type, ATTR_RERUN_COMPONENT_OPTIONAL, ATTR_RERUN_COMPONENT_RECOMMENDED,
+    format_path, ArrowRegistry, CodeGenerator, Docs, ElementType, Object, ObjectField, ObjectKind,
+    Objects, Reporter, Type, ATTR_RERUN_COMPONENT_OPTIONAL, ATTR_RERUN_COMPONENT_RECOMMENDED,
     ATTR_RERUN_COMPONENT_REQUIRED, ATTR_RUST_CUSTOM_CLAUSE, ATTR_RUST_DERIVE,
     ATTR_RUST_DERIVE_ONLY, ATTR_RUST_NEW_PUB_CRATE, ATTR_RUST_REPR,
 };
@@ -1433,7 +1433,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>code = String::new();
     code.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;// {}\n&quot;</span>, <span class="macro">autogen_warning!</span>()));
     <span class="kw">if let </span><span class="prelude-val">Some</span>(source_path) = obj.relative_filepath() {
-        code.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;// Based on {source_path:?}.\n\n&quot;</span>));
+        code.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;// Based on {:?}.\n\n&quot;</span>, format_path(source_path)));
     }
 
     code.push_str(<span class="string">&quot;#![allow(trivial_numeric_casts)]\n&quot;</span>);
